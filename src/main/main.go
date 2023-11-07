@@ -27,10 +27,15 @@ func main() {
 	}
 
 	for _, pod := range pods.Items {
-		fmt.Printf(
-			"Name: %s\n",
-			pod.Object["metadata"].(map[string]interface{})["name"],
-		)
+		fmt.Printf("Items: %+v", pod.Object["status"])
+		//fmt.Printf(
+		//	"Name: %s\n",
+		//	pod.Object["metadata"].(map[string]interface{})["name"],
+		//)
+		//fmt.Printf(
+		//	"Name: %s\n",
+		//	pod.Object["status"].(map[string]interface{})["state"],
+		//)
 	}
 }
 
