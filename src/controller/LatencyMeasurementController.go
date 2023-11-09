@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -42,9 +43,26 @@ func NewLatencyMeasurementController(client dynamic.Interface) (*LatencyMeasurem
 			}
 		},
 		AddFunc: func(obj interface{}) {
+			log.Info("AddFunc object: ", obj)
 			key, err := cache.MetaNamespaceKeyFunc(obj)
 			if err == nil {
+				// tu mozna dodac co sie chce chyba do kolejki
 				queue.Add(key)
+			}
+		},
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			log.Info("Update old object:", oldObj)
+			log.Info("Update new object:", newObj)
+			jsonStr, ok := newObj.(*string)
+			if ok {
+				str := *jsonStr
+				x := map[string]string{}
+				err := json.Unmarshal([]byte(str), &x)
+				if err != nil {
+					log.Error("Error unmarshalling:", err.Error())
+				}
+			} else {
+				log.Info("newObj is not string")
 			}
 		},
 	})
