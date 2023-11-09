@@ -1,37 +1,28 @@
 package main
 
 import (
-	"context"
+	controller2 "calm-orchestrator/src/controller"
 	"fmt"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"path/filepath"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
+
+var logger = logf.Log.WithName("main")
 
 func main() {
 	client, err := newClient()
-
-	gvr := schema.GroupVersionResource{
-		Group:    "measurement.calm.com",
-		Version:  "v1alpha1",
-		Resource: "latencymeasurements",
-	}
-
-	pods, err := client.Resource(gvr).Namespace("calm-operator-system").List(context.Background(), v1.ListOptions{})
 	if err != nil {
-		fmt.Printf("error getting pods: %v\n", err)
-		os.Exit(1)
+		logger.Error(err, "failed to create client")
 	}
-
-	for _, pod := range pods.Items {
-		fmt.Printf(
-			"Name: %s\n",
-			pod.Object["metadata"].(map[string]interface{})["name"],
-		)
+	controller, err := controller2.NewLatencyMeasurementController(client)
+	if err != nil {
+		logger.Error(err, "failed to create LM controller")
 	}
+	controller.Run()
+	defer controller.Stop()
 }
 
 func newClient() (dynamic.Interface, error) {
@@ -57,3 +48,25 @@ func newClient() (dynamic.Interface, error) {
 
 	return dynClient, nil
 }
+
+// odczytywanie
+//client, err := newClient()
+//
+//gvr := schema.GroupVersionResource{
+//	Group:    "measurement.calm.com",
+//	Version:  "v1alpha1",
+//	Resource: "latencymeasurements",
+//}
+//
+//pods, err := client.Resource(gvr).Namespace("calm-operator-system").List(context.Background(), v1.ListOptions{})
+//if err != nil {
+//	fmt.Printf("error getting pods: %v\n", err)
+//	os.Exit(1)
+//}
+//
+//for _, pod := range pods.Items {
+//	fmt.Printf(
+//		"Name: %s\n",
+//		pod.Object["metadata"].(map[string]interface{})["name"],
+//	)
+//}
