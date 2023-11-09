@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -20,6 +21,42 @@ var latencyMeasurementResource = schema.GroupVersionResource{
 	Group:    "measurement.calm.com",
 	Version:  "v1alpha1",
 	Resource: "latencymeasurements",
+}
+
+type Server struct {
+	Node      string `json:"node,omitempty"`
+	IpAddress string `json:"ip_address,omitempty"`
+	Port      int    `json:"port,omitempty"`
+}
+
+type Client struct {
+	Node              string `json:"node,omitempty"`
+	IpAddress         string `json:"ip_address,omitempty"`
+	Port              int    `json:"port,omitempty"`
+	Interval          int    `json:"interval,omitempty"`
+	Duration          int    `json:"duration,omitempty"`
+	MetricsAggregator string `json:"metricsAggregator,omitempty"`
+}
+
+// LatencyMeasurementSpec defines the desired state of LatencyMeasurement
+type LatencyMeasurementSpec struct {
+	Side    string   `json:"side,omitempty"`
+	Servers []Server `json:"servers,omitempty"`
+	Clients []Client `json:"clients,omitempty"`
+}
+
+// LatencyMeasurementStatus defines the observed state of LatencyMeasurement
+type LatencyMeasurementStatus struct {
+	State   string `json:"state,omitempty"`
+	Details string `json:"details,omitempty"`
+}
+
+type LatencyMeasurement struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   LatencyMeasurementSpec   `json:"spec,omitempty"`
+	Status LatencyMeasurementStatus `json:"status,omitempty"`
 }
 
 type LatencyMeasurementController struct {
@@ -53,6 +90,11 @@ func NewLatencyMeasurementController(client dynamic.Interface) (*LatencyMeasurem
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			log.Info("Update old object:", oldObj)
 			log.Info("Update new object:", newObj)
+			// TODO moze zmapuje mi mojego structa? jak tutaj https://medium.com/speechmatics/how-to-write-kubernetes-custom-controllers-in-go-8014c4a04235
+			newLm, matchedType := newObj.(*LatencyMeasurement)
+			if matchedType {
+				log.Info("Status: ", newLm.Status.State)
+			}
 			jsonStr, ok := newObj.(*string)
 			if ok {
 				str := *jsonStr
