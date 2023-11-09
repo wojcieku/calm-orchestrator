@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -9,13 +10,10 @@ import (
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"time"
 )
 
 const maxRetries = 3
-
-var logger = logf.Log.WithName("lm-controller")
 
 var latencyMeasurementResource = schema.GroupVersionResource{
 	Group:    "measurement.calm.com",
@@ -102,14 +100,14 @@ func (l *LatencyMeasurementController) runWorker() {
 }
 
 func (l *LatencyMeasurementController) processItem(key string) error {
-	logger.Info("process Item key: " + key)
+	log.Info("process Item key: " + key)
 	switch key {
 	case "create":
-		logger.Info("Create event logic executed")
+		log.Info("Create event logic executed")
 	case "update":
-		logger.Info("Update event logic executed")
+		log.Info("Update event logic executed")
 	case "delete":
-		logger.Info("Delete event logic executed")
+		log.Info("Delete event logic executed")
 	}
 	return nil
 }

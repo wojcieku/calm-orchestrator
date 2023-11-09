@@ -3,24 +3,23 @@ package main
 import (
 	controller2 "calm-orchestrator/src/controller"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"path/filepath"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
-
-var logger = logf.Log.WithName("main")
 
 func main() {
 	client, err := newClient()
 	if err != nil {
-		logger.Error(err, "failed to create client")
+		log.Error(err, "failed to create client")
 	}
 	controller, err := controller2.NewLatencyMeasurementController(client)
 	if err != nil {
-		logger.Error(err, "failed to create LM controller")
+		log.Error(err, "failed to create LM controller")
 	}
+	log.Info("Starting controller")
 	controller.Run()
 	defer controller.Stop()
 }
