@@ -75,6 +75,7 @@ func NewLatencyMeasurementController(client dynamic.Interface, statusChan chan s
 
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		// TODO obsluga dodania i usuniecia?
 		DeleteFunc: func(obj interface{}) {
 			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 			if err == nil {
@@ -89,22 +90,7 @@ func NewLatencyMeasurementController(client dynamic.Interface, statusChan chan s
 				queue.Add(key)
 			}
 		},
-		UpdateFunc: func(oldObj, newObj interface{}) {
-			converter := runtime.DefaultUnstructuredConverter
-			unstructured, err := converter.ToUnstructured(newObj)
-			if err != nil {
-				log.Error("could not convert: ", err.Error())
-			}
-			var lm LatencyMeasurement
-
-			err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructured, &lm)
-			if err != nil {
-				log.Info("Event conversion to LatencyMeasurement failed")
-				return
-			}
-			queue.Add(lm.Status.State)
-
-		},
+		UpdateFunc: getUpdateFunc(queue),
 	})
 
 	return &LatencyMeasurementController{
@@ -113,6 +99,25 @@ func NewLatencyMeasurementController(client dynamic.Interface, statusChan chan s
 		stopper:  stopper,
 		status:   statusChan,
 	}, nil
+}
+
+func getUpdateFunc(queue workqueue.RateLimitingInterface) func(oldObj interface{}, newObj interface{}) {
+	return func(oldObj, newObj interface{}) {
+		converter := runtime.DefaultUnstructuredConverter
+		unstructured, err := converter.ToUnstructured(newObj)
+		if err != nil {
+			log.Error("could not convert: ", err.Error())
+		}
+		var lm LatencyMeasurement
+
+		err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructured, &lm)
+		if err != nil {
+			log.Info("Event conversion to LatencyMeasurement failed")
+			return
+		}
+		queue.Add(lm.Status.State)
+
+	}
 }
 
 func (l *LatencyMeasurementController) Stop() {
