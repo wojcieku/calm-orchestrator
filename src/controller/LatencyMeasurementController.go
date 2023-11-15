@@ -1,10 +1,11 @@
 package controller
 
 import (
-	"encoding/json"
+	"calm-orchestrator/src/utils"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -63,9 +64,10 @@ type LatencyMeasurementController struct {
 	informer cache.SharedIndexInformer
 	stopper  chan struct{}
 	queue    workqueue.RateLimitingInterface
+	status   chan string
 }
 
-func NewLatencyMeasurementController(client dynamic.Interface) (*LatencyMeasurementController, error) {
+func NewLatencyMeasurementController(client dynamic.Interface, statusChan chan string) (*LatencyMeasurementController, error) {
 	// TODO for namespace
 	dynInformer := dynamicinformer.NewDynamicSharedInformerFactory(client, 0)
 	informer := dynInformer.ForResource(latencyMeasurementResource).Informer()
@@ -88,24 +90,20 @@ func NewLatencyMeasurementController(client dynamic.Interface) (*LatencyMeasurem
 			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			log.Info("Update old object:", oldObj)
-			log.Info("Update new object:", newObj)
-			// TODO moze zmapuje mi mojego structa? jak tutaj https://medium.com/speechmatics/how-to-write-kubernetes-custom-controllers-in-go-8014c4a04235
-			newLm, matchedType := newObj.(*LatencyMeasurement)
-			if matchedType {
-				log.Info("Status: ", newLm.Status.State)
+			converter := runtime.DefaultUnstructuredConverter
+			unstructured, err := converter.ToUnstructured(newObj)
+			if err != nil {
+				log.Error("could not convert: ", err.Error())
 			}
-			jsonStr, ok := newObj.(*string)
-			if ok {
-				str := *jsonStr
-				x := map[string]string{}
-				err := json.Unmarshal([]byte(str), &x)
-				if err != nil {
-					log.Error("Error unmarshalling:", err.Error())
-				}
-			} else {
-				log.Info("newObj is not string")
+			var lm LatencyMeasurement
+
+			err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructured, &lm)
+			if err != nil {
+				log.Info("Event conversion to LatencyMeasurement failed")
+				return
 			}
+			queue.Add(lm.Status.State)
+
 		},
 	})
 
@@ -113,6 +111,7 @@ func NewLatencyMeasurementController(client dynamic.Interface) (*LatencyMeasurem
 		informer: informer,
 		queue:    queue,
 		stopper:  stopper,
+		status:   statusChan,
 	}, nil
 }
 
@@ -164,8 +163,10 @@ func (l *LatencyMeasurementController) processItem(key string) error {
 	switch key {
 	case "create":
 		log.Info("Create event logic executed")
-	case "update":
+	case utils.SUCCESS:
+		// TODO send success
 		log.Info("Update event logic executed")
+		l.status <- utils.SUCCESS
 	case "delete":
 		log.Info("Delete event logic executed")
 	}

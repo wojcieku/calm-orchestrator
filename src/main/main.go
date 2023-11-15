@@ -2,6 +2,7 @@ package main
 
 import (
 	controller2 "calm-orchestrator/src/controller"
+	"calm-orchestrator/src/utils"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/dynamic"
@@ -12,15 +13,32 @@ import (
 
 func main() {
 	client, err := newClient()
+	statusChannel := make(chan string)
+
 	if err != nil {
 		log.Error(err, "failed to create client")
 	}
-	controller, err := controller2.NewLatencyMeasurementController(client)
+	controller, err := controller2.NewLatencyMeasurementController(client, statusChannel)
 	if err != nil {
 		log.Error(err, "failed to create LM controller")
 	}
 	log.Info("Starting controller")
-	controller.Run()
+	go controller.Run()
+
+	// wait for success or failure of servers' deployment
+	for status := range statusChannel {
+		log.Info("Message received")
+		switch status {
+		case utils.SUCCESS:
+			{
+				log.Info("Setup succeeded")
+			}
+		case utils.FAILURE:
+			{
+				log.Error("Setup failed")
+			}
+		}
+	}
 	defer controller.Stop()
 }
 
