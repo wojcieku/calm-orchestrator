@@ -1,12 +1,11 @@
 package controller
 
 import (
-	"calm-orchestrator/src/utils"
+	"calm-orchestrator/src/commons"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/dynamic"
@@ -18,46 +17,12 @@ import (
 
 const maxRetries = 3
 
-var latencyMeasurementResource = schema.GroupVersionResource{
-	Group:    "measurement.calm.com",
-	Version:  "v1alpha1",
-	Resource: "latencymeasurements",
-}
-
-type Server struct {
-	Node      string `json:"node,omitempty"`
-	IpAddress string `json:"ip_address,omitempty"`
-	Port      int    `json:"port,omitempty"`
-}
-
-type Client struct {
-	Node              string `json:"node,omitempty"`
-	IpAddress         string `json:"ip_address,omitempty"`
-	Port              int    `json:"port,omitempty"`
-	Interval          int    `json:"interval,omitempty"`
-	Duration          int    `json:"duration,omitempty"`
-	MetricsAggregator string `json:"metricsAggregator,omitempty"`
-}
-
-// LatencyMeasurementSpec defines the desired state of LatencyMeasurement
-type LatencyMeasurementSpec struct {
-	Side    string   `json:"side,omitempty"`
-	Servers []Server `json:"servers,omitempty"`
-	Clients []Client `json:"clients,omitempty"`
-}
-
-// LatencyMeasurementStatus defines the observed state of LatencyMeasurement
-type LatencyMeasurementStatus struct {
-	State   string `json:"state,omitempty"`
-	Details string `json:"details,omitempty"`
-}
-
 type LatencyMeasurement struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   LatencyMeasurementSpec   `json:"spec,omitempty"`
-	Status LatencyMeasurementStatus `json:"status,omitempty"`
+	Spec   commons.LatencyMeasurementSpec   `json:"spec,omitempty"`
+	Status commons.LatencyMeasurementStatus `json:"status,omitempty"`
 }
 
 type LatencyMeasurementController struct {
@@ -70,7 +35,7 @@ type LatencyMeasurementController struct {
 func NewLatencyMeasurementController(client dynamic.Interface, statusChan chan string) (*LatencyMeasurementController, error) {
 	// TODO for namespace
 	dynInformer := dynamicinformer.NewDynamicSharedInformerFactory(client, 0)
-	informer := dynInformer.ForResource(latencyMeasurementResource).Informer()
+	informer := dynInformer.ForResource(commons.LatencyMeasurementResource).Informer()
 	stopper := make(chan struct{})
 
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
@@ -147,9 +112,7 @@ func (l *LatencyMeasurementController) runWorker() {
 		if quit {
 			return
 		}
-
 		err := l.processItem(key.(string))
-
 		if err == nil {
 			l.queue.Forget(key)
 		} else if l.queue.NumRequeues(key) < maxRetries {
@@ -158,7 +121,6 @@ func (l *LatencyMeasurementController) runWorker() {
 			l.queue.Forget(key)
 			utilruntime.HandleError(err)
 		}
-
 		l.queue.Done(key)
 	}
 }
@@ -168,10 +130,10 @@ func (l *LatencyMeasurementController) processItem(key string) error {
 	switch key {
 	case "create":
 		log.Info("Create event logic executed")
-	case utils.SUCCESS:
+	case commons.SUCCESS:
 		// TODO send success
 		log.Info("Update event logic executed")
-		l.status <- utils.SUCCESS
+		l.status <- commons.SUCCESS
 	case "delete":
 		log.Info("Delete event logic executed")
 	}

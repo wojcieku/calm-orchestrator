@@ -1,0 +1,17 @@
+measurementID: measurement-2023-16-11
+serverSide: klaster-serwerowy
+clientSide: klaster-kliencki
+metricsAggregator: agregator
+pairs:
+  - serverNode: serverNode1
+    clientNode: clientNode1
+    serverIP: 10.10.10.10
+    serverPort: 1501
+    interval: 70
+    duration: 60
+  - serverNode: serverNode2
+    clientNode: clientNode2
+    serverIP: 20.20.20.20
+    serverPort: 2138
+    interval: 50
+    duration: 20

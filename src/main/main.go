@@ -5,7 +5,6 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -14,13 +13,25 @@ import (
 )
 
 func main() {
+	// load/read config
+
+	// prepare clients (kube config validation)
+
+	// prepare LatencyMeasurements for Client and Server side
+
+	// start controllers (prepare channels)
+
+	// create Server side LM
+
+	// create Client side LM
+
+	// delete Client and Server side LMs
+
+	// completed, metrics?
+
 	clients, err := getClients()
 	//statusChannel := make(chan string)
-	gvr := schema.GroupVersionResource{
-		Group:    "",
-		Version:  "v1",
-		Resource: "pods",
-	}
+
 	if err != nil {
 		log.Error(err, "failed to create client")
 	}
