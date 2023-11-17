@@ -9,10 +9,9 @@ import (
 
 func TestMeasurementConfigHandler_LoadConfiguration(t *testing.T) {
 	configFilePath := "sampleConfig.yaml"
-	handler := MeasurementConfigHandler{ConfigFilePath: configFilePath}
+	handler := MeasurementConfigHandler{}
 
-	handler.LoadConfiguration()
-	config := handler.MeasurementConfig
+	config := handler.LoadConfiguration(configFilePath)
 
 	serverSideName := "klaster-serwerowy"
 	if config.ServerSide != serverSideName {
@@ -36,11 +35,13 @@ func TestMeasurementConfigHandler_ConfigToServerLatencyMeasurement(t *testing.T)
 			Port:      2138,
 		}}},
 	}
-	configFilePath := "sampleConfig.yaml"
-	handler := MeasurementConfigHandler{ConfigFilePath: configFilePath}
 
-	handler.LoadConfiguration()
-	got := handler.ConfigToServerLatencyMeasurement()
+	// TODO create MeasurementConfig with fixed data instead of calling LoadConfiguration()
+	configFilePath := "sampleConfig.yaml"
+	handler := MeasurementConfigHandler{}
+
+	config := handler.LoadConfiguration(configFilePath)
+	got := handler.ConfigToServerLatencyMeasurement(config)
 
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("ConfigToServerLatencyMeasurement() = %v, want %v", got, want)

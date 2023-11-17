@@ -9,8 +9,6 @@ import (
 )
 
 type MeasurementConfigHandler struct {
-	ConfigFilePath    string
-	MeasurementConfig MeasurementConfig
 }
 
 type MeasurementConfig struct {
@@ -30,8 +28,8 @@ type pair struct {
 	Duration   int    `yaml:"duration"`
 }
 
-func (m *MeasurementConfigHandler) LoadConfiguration() {
-	f, err := os.ReadFile(m.ConfigFilePath)
+func (m *MeasurementConfigHandler) LoadConfiguration(configFilePath string) MeasurementConfig {
+	f, err := os.ReadFile(configFilePath)
 	if err != nil {
 		log.Error("Failed to read file: " + err.Error())
 		os.Exit(1)
@@ -44,12 +42,11 @@ func (m *MeasurementConfigHandler) LoadConfiguration() {
 	}
 	log.Info(fmt.Printf("Measurement config: %+v", measurementConfig))
 
-	m.MeasurementConfig = measurementConfig
+	return measurementConfig
 }
 
-func (m *MeasurementConfigHandler) ConfigToServerLatencyMeasurement() commons.LatencyMeasurement {
+func (m *MeasurementConfigHandler) ConfigToServerLatencyMeasurement(config MeasurementConfig) commons.LatencyMeasurement {
 	var lm commons.LatencyMeasurement
-	config := m.MeasurementConfig
 	// TODO dodac wersje API itd w typeMeta
 	lm.Name = config.MeasurementID
 
