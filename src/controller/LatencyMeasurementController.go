@@ -4,7 +4,6 @@ import (
 	"calm-orchestrator/src/commons"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -16,14 +15,6 @@ import (
 )
 
 const maxRetries = 3
-
-type LatencyMeasurement struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   commons.LatencyMeasurementSpec   `json:"spec,omitempty"`
-	Status commons.LatencyMeasurementStatus `json:"status,omitempty"`
-}
 
 type LatencyMeasurementController struct {
 	informer cache.SharedIndexInformer
@@ -73,7 +64,7 @@ func getUpdateFunc(queue workqueue.RateLimitingInterface) func(oldObj interface{
 		if err != nil {
 			log.Error("could not convert: ", err.Error())
 		}
-		var lm LatencyMeasurement
+		var lm commons.LatencyMeasurement
 
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructured, &lm)
 		if err != nil {
@@ -81,7 +72,6 @@ func getUpdateFunc(queue workqueue.RateLimitingInterface) func(oldObj interface{
 			return
 		}
 		queue.Add(lm.Status.State)
-
 	}
 }
 
@@ -113,11 +103,12 @@ func (l *LatencyMeasurementController) runWorker() {
 			return
 		}
 		err := l.processItem(key.(string))
-		if err == nil {
+		switch {
+		case err == nil:
 			l.queue.Forget(key)
-		} else if l.queue.NumRequeues(key) < maxRetries {
+		case l.queue.NumRequeues(key) < maxRetries:
 			l.queue.AddRateLimited(key)
-		} else {
+		default:
 			l.queue.Forget(key)
 			utilruntime.HandleError(err)
 		}

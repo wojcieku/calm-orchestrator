@@ -11,7 +11,7 @@ func TestMeasurementConfigHandler_LoadConfiguration(t *testing.T) {
 	configFilePath := "sampleConfig.yaml"
 	handler := MeasurementConfigHandler{}
 
-	config := handler.LoadConfiguration(configFilePath)
+	config := handler.LoadConfigurationFromPath(configFilePath)
 
 	serverSideName := "klaster-serwerowy"
 	if config.ServerSide != serverSideName {
@@ -24,26 +24,33 @@ func TestMeasurementConfigHandler_LoadConfiguration(t *testing.T) {
 
 func TestMeasurementConfigHandler_ConfigToServerLatencyMeasurement(t *testing.T) {
 	want := commons.LatencyMeasurement{
-		ObjectMeta: metav1.ObjectMeta{Name: "measurement-2023-16-11"},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       commons.KIND,
+			APIVersion: commons.API_GROUP_WITH_VERSION,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "measurement-2023-16-11",
+			Namespace: commons.NAMESPACE,
+		},
 		Spec: commons.LatencyMeasurementSpec{Servers: []commons.Server{{
 			Node:      "serverNode1",
-			IpAddress: "10.10.10.10",
+			IPAddress: "10.10.10.10",
 			Port:      1501,
 		}, {
 			Node:      "serverNode2",
-			IpAddress: "20.20.20.20",
+			IPAddress: "20.20.20.20",
 			Port:      2138,
 		}}},
 	}
 
-	// TODO create MeasurementConfig with fixed data instead of calling LoadConfiguration()
-	configFilePath := "sampleConfig.yaml"
+	// TODO create MeasurementConfig with fixed data instead of calling LoadConfigurationFromPath()
+	configFilePath := "../../sampleConfig.yaml"
 	handler := MeasurementConfigHandler{}
 
-	config := handler.LoadConfiguration(configFilePath)
-	got := handler.ConfigToServerLatencyMeasurement(config)
+	config := handler.LoadConfigurationFromPath(configFilePath)
+	got := handler.ConfigToServerSideLatencyMeasurement(config)
 
 	if !reflect.DeepEqual(got, want) {
-		t.Errorf("ConfigToServerLatencyMeasurement() = %v, want %v", got, want)
+		t.Errorf("ConfigToServerSideLatencyMeasurement() = %v, want %v", got, want)
 	}
 }

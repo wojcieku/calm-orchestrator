@@ -1,6 +1,7 @@
 package main
 
 import (
+	"calm-orchestrator/src/utils"
 	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
@@ -12,14 +13,26 @@ import (
 	"path/filepath"
 )
 
+// TODO konfiguracja jako parametr wywolania albo cos
+const CONFIG_PATH = "../../sampleConfig.yaml"
+
 func main() {
 	// load/read config
+	configHandler := utils.MeasurementConfigHandler{}
+	config := configHandler.LoadConfigurationFromPath(CONFIG_PATH)
+
+	clientContextName := config.ClientSide
+	serverContextName := config.ServerSide
 
 	// prepare clients (kube config validation)
 
 	// prepare LatencyMeasurements for Client and Server side
+	serverSideLm := configHandler.ConfigToServerSideLatencyMeasurement(config)
+	clientSideLm := configHandler.ConfigToClientSideLatencyMeasurement(config)
 
 	// start controllers (prepare channels)
+	serverSideStatusChan := make(chan string)
+	clientSideStatusChan := make(chan string)
 
 	// create Server side LM
 
@@ -128,6 +141,10 @@ func getClients() ([]dynamic.Interface, error) {
 	}
 
 	return []dynamic.Interface{serverSideDynClient, clientSideDynClient}, nil
+}
+
+func getDynamicClientForContextName(contextName string) dynamic.Interface {
+	// TODO to samo co wyzej tylko dla jednego
 }
 
 func buildConfigWithContextFromFlags(context string, kubeconfigPath string) (*rest.Config, error) {

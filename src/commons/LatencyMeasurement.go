@@ -6,14 +6,22 @@ import (
 )
 
 const (
-	SUCCESS = "Success"
-	FAILURE = "Failure"
+	SUCCESS                = "Success"
+	FAILURE                = "Failure"
+	NAMESPACE              = "calm-operator-system"
+	KIND                   = "LatencyMeasurement"
+	API_GROUP              = "measurement.calm.com"
+	API_VERSION            = "v1alpha1"
+	API_RESOURCE           = "latencymeasurements"
+	API_GROUP_WITH_VERSION = API_GROUP + "/" + API_VERSION
+	SERVER_SIDE            = "server"
+	CLIENT_SIDE            = "client"
 )
 
 var LatencyMeasurementResource = schema.GroupVersionResource{
-	Group:    "measurement.calm.com",
-	Version:  "v1alpha1",
-	Resource: "latencymeasurements",
+	Group:    API_GROUP,
+	Version:  API_VERSION,
+	Resource: API_RESOURCE,
 }
 
 type LatencyMeasurement struct {
@@ -39,13 +47,13 @@ type LatencyMeasurementStatus struct {
 
 type Server struct {
 	Node      string `json:"node,omitempty"`
-	IpAddress string `json:"ip_address,omitempty"`
+	IPAddress string `json:"ipAddress,omitempty"`
 	Port      int    `json:"port,omitempty"`
 }
 
 type Client struct {
 	Node              string `json:"node,omitempty"`
-	IpAddress         string `json:"ip_address,omitempty"`
+	IPAddress         string `json:"ipAddress,omitempty"`
 	Port              int    `json:"port,omitempty"`
 	Interval          int    `json:"interval,omitempty"`
 	Duration          int    `json:"duration,omitempty"`

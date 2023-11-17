@@ -4,6 +4,7 @@ import (
 	"calm-orchestrator/src/commons"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"os"
 )
@@ -16,10 +17,10 @@ type MeasurementConfig struct {
 	ServerSide        string `yaml:"serverSide"`
 	ClientSide        string `yaml:"clientSide"`
 	MetricsAggregator string `yaml:"metricsAggregator"`
-	Pairs             []pair `yaml:"pairs"`
+	Pairs             []Pair `yaml:"pairs"`
 }
 
-type pair struct {
+type Pair struct {
 	ServerNode string `yaml:"serverNode"`
 	ClientNode string `yaml:"clientNode"`
 	ServerIP   string `yaml:"serverIP"`
@@ -28,7 +29,7 @@ type pair struct {
 	Duration   int    `yaml:"duration"`
 }
 
-func (m *MeasurementConfigHandler) LoadConfiguration(configFilePath string) MeasurementConfig {
+func (m *MeasurementConfigHandler) LoadConfigurationFromPath(configFilePath string) MeasurementConfig {
 	f, err := os.ReadFile(configFilePath)
 	if err != nil {
 		log.Error("Failed to read file: " + err.Error())
@@ -36,6 +37,7 @@ func (m *MeasurementConfigHandler) LoadConfiguration(configFilePath string) Meas
 	}
 	var measurementConfig MeasurementConfig
 	err = yaml.Unmarshal(f, &measurementConfig)
+
 	if err != nil {
 		log.Error("Failed to unmarshal configuration: " + err.Error())
 		os.Exit(1)
@@ -45,15 +47,13 @@ func (m *MeasurementConfigHandler) LoadConfiguration(configFilePath string) Meas
 	return measurementConfig
 }
 
-func (m *MeasurementConfigHandler) ConfigToServerLatencyMeasurement(config MeasurementConfig) commons.LatencyMeasurement {
-	var lm commons.LatencyMeasurement
-	// TODO dodac wersje API itd w typeMeta
-	lm.Name = config.MeasurementID
-
+func (m *MeasurementConfigHandler) ConfigToServerSideLatencyMeasurement(config MeasurementConfig) commons.LatencyMeasurement {
+	lm := getDefaultLatencyMeasurement(config)
+	lm.Spec.Side = commons.SERVER_SIDE
 	for _, p := range config.Pairs {
 		server := commons.Server{
 			Node:      p.ServerNode,
-			IpAddress: p.ServerIP,
+			IPAddress: p.ServerIP,
 			Port:      p.ServerPort,
 		}
 		lm.Spec.Servers = append(lm.Spec.Servers, server)
@@ -61,6 +61,32 @@ func (m *MeasurementConfigHandler) ConfigToServerLatencyMeasurement(config Measu
 	return lm
 }
 
-//func ConfigToClientSideLatencyMeasurement(config MeasurementConfig) (commons.LatencyMeasurement, error) {
-//
-//}
+func (m *MeasurementConfigHandler) ConfigToClientSideLatencyMeasurement(config MeasurementConfig) commons.LatencyMeasurement {
+	lm := getDefaultLatencyMeasurement(config)
+	lm.Spec.Side = commons.CLIENT_SIDE
+	for _, p := range config.Pairs {
+		client := commons.Client{
+			Node:              p.ClientNode,
+			IPAddress:         p.ServerIP,
+			Port:              p.ServerPort,
+			Interval:          p.Interval,
+			Duration:          p.Duration,
+			MetricsAggregator: config.MetricsAggregator,
+		}
+		lm.Spec.Clients = append(lm.Spec.Clients, client)
+	}
+	return lm
+}
+
+func getDefaultLatencyMeasurement(config MeasurementConfig) commons.LatencyMeasurement {
+	return commons.LatencyMeasurement{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       commons.KIND,
+			APIVersion: commons.API_GROUP_WITH_VERSION,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      config.MeasurementID,
+			Namespace: commons.NAMESPACE,
+		},
+	}
+}
