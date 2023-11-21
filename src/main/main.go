@@ -1,11 +1,15 @@
 package main
 
 import (
+	"calm-orchestrator/src/commons"
+	"calm-orchestrator/src/controller"
 	"calm-orchestrator/src/utils"
 	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -13,7 +17,7 @@ import (
 	"path/filepath"
 )
 
-// TODO konfiguracja jako parametr wywolania albo cos
+// TODO konfiguracja jako parametr wywolania albo cos + parametr kubeconfiga
 const CONFIG_PATH = "../../sampleConfig.yaml"
 
 func main() {
@@ -21,10 +25,13 @@ func main() {
 	configHandler := utils.MeasurementConfigHandler{}
 	config := configHandler.LoadConfigurationFromPath(CONFIG_PATH)
 
+	// cluster names
 	clientContextName := config.ClientSide
 	serverContextName := config.ServerSide
 
 	// prepare clients (kube config validation)
+	serverSideClient := getDynamicClientWithContextName(serverContextName)
+	clientSideClient := getDynamicClientWithContextName(clientContextName)
 
 	// prepare LatencyMeasurements for Client and Server side
 	serverSideLm := configHandler.ConfigToServerSideLatencyMeasurement(config)
@@ -34,77 +41,72 @@ func main() {
 	serverSideStatusChan := make(chan string)
 	clientSideStatusChan := make(chan string)
 
+	serverSideController := controller.NewLatencyMeasurementController(serverSideClient, serverSideStatusChan)
+	clientSideController := controller.NewLatencyMeasurementController(clientSideClient, clientSideStatusChan)
+
+	go serverSideController.Run()
+	defer serverSideController.Stop()
+
+	go clientSideController.Run()
+	defer clientSideController.Stop()
+
 	// create Server side LM
+	serverSideLmMap, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(serverSideLm)
+	_, err := serverSideClient.Resource(commons.LatencyMeasurementResource).Create(context.Background(),
+		&unstructured.Unstructured{Object: serverSideLmMap}, v1.CreateOptions{})
+
+	if err != nil {
+		log.Fatal("Failed to create Server Side Latency Measurement")
+	}
+
+	// wait until completion of server side setup
+serverStatusLoop:
+	for status := range serverSideStatusChan {
+		switch status {
+		case commons.SUCCESS:
+			{
+				log.Info("Servers setup succeeded")
+				break serverStatusLoop
+			}
+		case commons.FAILURE:
+			{
+				log.Error("Servers setup failed")
+				// TODO custom resources clean up
+			}
+		}
+	}
 
 	// create Client side LM
+	clientSideLmMap, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(clientSideLm)
+	_, err = clientSideClient.Resource(commons.LatencyMeasurementResource).Create(context.Background(),
+		&unstructured.Unstructured{Object: clientSideLmMap}, v1.CreateOptions{})
+
+	if err != nil {
+		log.Fatal("Failed to create Client Side Latency Measurement")
+	}
+
+clientStatusLoop:
+	for status := range serverSideStatusChan {
+		switch status {
+		case commons.SUCCESS:
+			{
+				log.Info("Clients setup and measurement succeeded")
+				break clientStatusLoop
+			}
+		case commons.FAILURE:
+			{
+				log.Error("Clients setup failed, measurement failed")
+				// TODO custom resources clean up
+			}
+		}
+	}
 
 	// delete Client and Server side LMs
 
 	// completed, metrics?
-
-	clients, err := getClients()
-	//statusChannel := make(chan string)
-
-	if err != nil {
-		log.Error(err, "failed to create client")
-	}
-	serverSideClient := clients[0]
-	clientSideClient := clients[1]
-
-	pods, err := serverSideClient.Resource(gvr).Namespace("").List(context.Background(), v1.ListOptions{})
-
-	if err != nil {
-		fmt.Printf("error getting pods: %v\n", err)
-		os.Exit(1)
-	}
-
-	log.Info("Listing for server side")
-	for _, pod := range pods.Items {
-		log.Info(
-			"Name: %s\n",
-			pod.Object["metadata"].(map[string]interface{})["name"],
-		)
-	}
-
-	pods, err = clientSideClient.Resource(gvr).Namespace("").List(context.Background(), v1.ListOptions{})
-
-	if err != nil {
-		fmt.Printf("error getting pods: %v\n", err)
-		os.Exit(1)
-	}
-
-	log.Info("Listing for client side")
-	for _, pod := range pods.Items {
-		log.Info(
-			"Name: %s\n",
-			pod.Object["metadata"].(map[string]interface{})["name"],
-		)
-	}
-	//controller, err := controller2.NewLatencyMeasurementController(client, statusChannel)
-	//if err != nil {
-	//	log.Error(err, "failed to create LM controller")
-	//}
-	//log.Info("Starting controller")
-	//go controller.Run()
-	//
-	//// wait for success or failure of servers' deployment
-	//for status := range statusChannel {
-	//	log.Info("Message received")
-	//	switch status {
-	//	case utils.SUCCESS:
-	//		{
-	//			log.Info("Setup succeeded")
-	//		}
-	//	case utils.FAILURE:
-	//		{
-	//			log.Error("Setup failed")
-	//		}
-	//	}
-	//}
-	//defer controller.Stop()
 }
 
-func getClients() ([]dynamic.Interface, error) {
+func getDynamicClientWithContextName(contextName string) dynamic.Interface {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Printf("error getting user home dir: %v\n", err)
@@ -112,39 +114,14 @@ func getClients() ([]dynamic.Interface, error) {
 	}
 	kubeConfigPath := filepath.Join(userHomeDir, ".kube", "config")
 	fmt.Printf("Using kubeconfig: %s\n", kubeConfigPath)
+	serverKubeConfig, err := buildConfigWithContextFromFlags(contextName, kubeConfigPath)
 
-	clientCluster := "kind-client-side"
-	serverCluster := "kind-server-side"
-
-	serverKubeConfig, err := buildConfigWithContextFromFlags(serverCluster, kubeConfigPath)
-	//kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
-	if err != nil {
-		fmt.Printf("error getting Kubernetes config: %v\n", err)
-		os.Exit(1)
-	}
-	clientKubeConfig, err := buildConfigWithContextFromFlags(clientCluster, kubeConfigPath)
-	//kubeConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
-	if err != nil {
-		fmt.Printf("error getting Kubernetes config: %v\n", err)
-		os.Exit(1)
-	}
-
-	serverSideDynClient, err := dynamic.NewForConfig(serverKubeConfig)
+	dynClient, err := dynamic.NewForConfig(serverKubeConfig)
 	if err != nil {
 		fmt.Printf("error creating dynamic client: %v\n", err)
 		os.Exit(1)
 	}
-	clientSideDynClient, err := dynamic.NewForConfig(clientKubeConfig)
-	if err != nil {
-		fmt.Printf("error creating dynamic client: %v\n", err)
-		os.Exit(1)
-	}
-
-	return []dynamic.Interface{serverSideDynClient, clientSideDynClient}, nil
-}
-
-func getDynamicClientForContextName(contextName string) dynamic.Interface {
-	// TODO to samo co wyzej tylko dla jednego
+	return dynClient
 }
 
 func buildConfigWithContextFromFlags(context string, kubeconfigPath string) (*rest.Config, error) {
@@ -154,25 +131,3 @@ func buildConfigWithContextFromFlags(context string, kubeconfigPath string) (*re
 			CurrentContext: context,
 		}).ClientConfig()
 }
-
-// odczytywanie
-//client, err := getClients()
-//
-//gvr := schema.GroupVersionResource{
-//	Group:    "measurement.calm.com",
-//	Version:  "v1alpha1",
-//	Resource: "latencymeasurements",
-//}
-//
-//pods, err := client.Resource(gvr).Namespace("calm-operator-system").List(context.Background(), v1.ListOptions{})
-//if err != nil {
-//	fmt.Printf("error getting pods: %v\n", err)
-//	os.Exit(1)
-//}
-//
-//for _, pod := range pods.Items {
-//	fmt.Printf(
-//		"Name: %s\n",
-//		pod.Object["metadata"].(map[string]interface{})["name"],
-//	)
-//}

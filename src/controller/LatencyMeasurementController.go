@@ -23,7 +23,7 @@ type LatencyMeasurementController struct {
 	status   chan string
 }
 
-func NewLatencyMeasurementController(client dynamic.Interface, statusChan chan string) (*LatencyMeasurementController, error) {
+func NewLatencyMeasurementController(client dynamic.Interface, statusChan chan string) *LatencyMeasurementController {
 	// TODO for namespace
 	dynInformer := dynamicinformer.NewDynamicSharedInformerFactory(client, 0)
 	informer := dynInformer.ForResource(commons.LatencyMeasurementResource).Informer()
@@ -54,7 +54,7 @@ func NewLatencyMeasurementController(client dynamic.Interface, statusChan chan s
 		queue:    queue,
 		stopper:  stopper,
 		status:   statusChan,
-	}, nil
+	}
 }
 
 func getUpdateFunc(queue workqueue.RateLimitingInterface) func(oldObj interface{}, newObj interface{}) {
