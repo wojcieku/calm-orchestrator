@@ -73,6 +73,11 @@ func getUpdateFunc(queue workqueue.RateLimitingInterface) func(oldObj interface{
 		if lm.Status.State == commons.SUCCESS {
 			queue.Add(lm.Status.State)
 		} else if lm.Status.State == commons.FAILURE {
+			log.Errorf("Received failure status: %s", lm.Status.Details)
+			fmt.Println("input text:")
+			var w1, w2, w3 string
+			_, _ = fmt.Scanln(&w1, &w2, &w3)
+
 			queue.Add(lm.Status.State)
 		}
 	}
