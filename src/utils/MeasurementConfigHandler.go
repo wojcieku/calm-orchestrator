@@ -2,7 +2,6 @@ package utils
 
 import (
 	"calm-orchestrator/src/commons"
-	"fmt"
 	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
@@ -42,8 +41,6 @@ func (m *MeasurementConfigHandler) LoadConfigurationFromPath(configFilePath stri
 		log.Error("Failed to unmarshal configuration: " + err.Error())
 		os.Exit(1)
 	}
-	log.Info(fmt.Printf("Measurement config: %+v", measurementConfig))
-
 	return measurementConfig
 }
 

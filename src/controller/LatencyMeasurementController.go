@@ -40,10 +40,8 @@ func NewLatencyMeasurementController(client dynamic.Interface, statusChan chan s
 			}
 		},
 		AddFunc: func(obj interface{}) {
-			log.Info("AddFunc object: ", obj)
 			key, err := cache.MetaNamespaceKeyFunc(obj)
 			if err == nil {
-				// tu mozna dodac co sie chce chyba do kolejki
 				queue.Add(key)
 			}
 		},
@@ -72,7 +70,11 @@ func getUpdateFunc(queue workqueue.RateLimitingInterface) func(oldObj interface{
 			log.Info("Event conversion to LatencyMeasurement failed")
 			return
 		}
-		queue.Add(lm.Status.State)
+		if lm.Status.State == commons.SUCCESS {
+			queue.Add(lm.Status.State)
+		} else if lm.Status.State == commons.FAILURE {
+			queue.Add(lm.Status.State)
+		}
 	}
 }
 
@@ -118,13 +120,12 @@ func (l *LatencyMeasurementController) runWorker() {
 }
 
 func (l *LatencyMeasurementController) processItem(key string) error {
-	log.Info("process Item key: " + key)
 	switch key {
 	case commons.SUCCESS:
-		// TODO send success
 		log.Info("Update event logic executed")
 		l.status <- commons.SUCCESS
 	case commons.FAILURE:
+		// TODO send details from status State and Details
 		l.status <- commons.FAILURE
 	case "delete":
 		log.Info("Delete event logic executed")
