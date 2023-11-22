@@ -4,7 +4,7 @@ clientSide: kind-client-side
 metricsAggregator: agregator
 pairs:
   - serverNode: server-side-worker
-    clientNode: client-side-worker
+    clientNode: client-side-work
     serverIP: 172.18.0.3
     serverPort: 1501
     interval: 50

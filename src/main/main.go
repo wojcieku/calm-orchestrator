@@ -5,6 +5,7 @@ import (
 	"calm-orchestrator/src/controller"
 	"calm-orchestrator/src/utils"
 	"context"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -50,6 +51,7 @@ func main() {
 	defer clientSideController.Stop()
 
 	// create Server side LM
+	log.Info("Creating server side resources..")
 	createLatencyMeasurement(serverSideClient, serverSideLm)
 
 	// wait until completion of server side setup
@@ -63,13 +65,14 @@ serverStatusLoop:
 			}
 		case commons.FAILURE:
 			{
-				log.Error("Servers setup failed, deleting LatencyMeasurement in server side cluster..")
 				deleteLatencyMeasurement(serverSideClient, serverSideLm)
+				log.Panic("Servers setup failed, deleting LatencyMeasurement in server side cluster..")
 			}
 		}
 	}
 
 	// create Client side LM
+	log.Info("Creating client side resources..")
 	createLatencyMeasurement(clientSideClient, clientSideLm)
 
 	// wait until measurement completion
@@ -85,9 +88,13 @@ clientStatusLoop:
 			{
 				log.Error("Clients setup failed, deleting LatencyMeasurements in both clusters..")
 				deleteLatencyMeasurementsInBothClusters(serverSideClient, serverSideLm, clientSideClient, clientSideLm)
+				os.Exit(1)
 			}
 		}
 	}
+	fmt.Println("input text:")
+	var w1, w2, w3 string
+	_, _ = fmt.Scanln(&w1, &w2, &w3)
 
 	// delete Client and Server side LMs
 	deleteLatencyMeasurementsInBothClusters(serverSideClient, serverSideLm, clientSideClient, clientSideLm)

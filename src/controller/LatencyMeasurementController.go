@@ -35,8 +35,7 @@ func NewLatencyMeasurementController(client dynamic.Interface, statusChan chan s
 		DeleteFunc: func(obj interface{}) {
 			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 			if err == nil {
-				log.Info("Delete key: ", key)
-				queue.Add(key)
+				queue.Add("Delete:" + key)
 			}
 		},
 		AddFunc: func(obj interface{}) {
@@ -67,17 +66,13 @@ func getUpdateFunc(queue workqueue.RateLimitingInterface) func(oldObj interface{
 
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructured, &lm)
 		if err != nil {
-			log.Info("Event conversion to LatencyMeasurement failed")
+			log.Error("Event conversion to LatencyMeasurement failed")
 			return
 		}
 		if lm.Status.State == commons.SUCCESS {
 			queue.Add(lm.Status.State)
 		} else if lm.Status.State == commons.FAILURE {
 			log.Errorf("Received failure status: %s", lm.Status.Details)
-			fmt.Println("input text:")
-			var w1, w2, w3 string
-			_, _ = fmt.Scanln(&w1, &w2, &w3)
-
 			queue.Add(lm.Status.State)
 		}
 	}
@@ -127,13 +122,10 @@ func (l *LatencyMeasurementController) runWorker() {
 func (l *LatencyMeasurementController) processItem(key string) error {
 	switch key {
 	case commons.SUCCESS:
-		log.Info("Update event logic executed")
 		l.status <- commons.SUCCESS
 	case commons.FAILURE:
 		// TODO send details from status State and Details
 		l.status <- commons.FAILURE
-	case "delete":
-		log.Info("Delete event logic executed")
 	}
 	return nil
 }
