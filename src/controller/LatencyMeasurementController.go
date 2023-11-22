@@ -35,6 +35,7 @@ func NewLatencyMeasurementController(client dynamic.Interface, statusChan chan s
 		DeleteFunc: func(obj interface{}) {
 			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 			if err == nil {
+				log.Info("Delete key: ", key)
 				queue.Add(key)
 			}
 		},
@@ -119,12 +120,12 @@ func (l *LatencyMeasurementController) runWorker() {
 func (l *LatencyMeasurementController) processItem(key string) error {
 	log.Info("process Item key: " + key)
 	switch key {
-	case "create":
-		log.Info("Create event logic executed")
 	case commons.SUCCESS:
 		// TODO send success
 		log.Info("Update event logic executed")
 		l.status <- commons.SUCCESS
+	case commons.FAILURE:
+		l.status <- commons.FAILURE
 	case "delete":
 		log.Info("Delete event logic executed")
 	}
