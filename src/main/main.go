@@ -18,7 +18,7 @@ import (
 )
 
 // TODO konfiguracja jako parametr wywolania albo cos + parametr kubeconfiga
-const CONFIG_PATH = "../../sampleConfig.yaml"
+const CONFIG_PATH = "sampleConfig.yaml"
 
 func main() {
 	// load/read config
@@ -51,12 +51,18 @@ func main() {
 	defer clientSideController.Stop()
 
 	// create Server side LM
-	serverSideLmMap, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(serverSideLm)
-	_, err := serverSideClient.Resource(commons.LatencyMeasurementResource).Create(context.Background(),
-		&unstructured.Unstructured{Object: serverSideLmMap}, v1.CreateOptions{})
+	serverSideLmMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&serverSideLm)
+	if err != nil {
+		log.Error("To unstructured conversion failed:", err)
+	}
+	unstr := unstructured.Unstructured{Object: serverSideLmMap}
+	log.Info("Unstr kind:", unstr.GetKind())
+
+	_, err = serverSideClient.Resource(commons.LatencyMeasurementResource).Namespace(commons.NAMESPACE).Create(context.Background(),
+		&unstr, v1.CreateOptions{})
 
 	if err != nil {
-		log.Fatal("Failed to create Server Side Latency Measurement")
+		log.Fatal("Failed to create Server Side Latency Measurement: ", err)
 	}
 
 	// wait until completion of server side setup
@@ -77,8 +83,11 @@ serverStatusLoop:
 	}
 
 	// create Client side LM
-	clientSideLmMap, _ := runtime.DefaultUnstructuredConverter.ToUnstructured(clientSideLm)
-	_, err = clientSideClient.Resource(commons.LatencyMeasurementResource).Create(context.Background(),
+	clientSideLmMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&clientSideLm)
+	if err != nil {
+		log.Error("To unstructured conversion failed:", err)
+	}
+	_, err = clientSideClient.Resource(commons.LatencyMeasurementResource).Namespace(commons.NAMESPACE).Create(context.Background(),
 		&unstructured.Unstructured{Object: clientSideLmMap}, v1.CreateOptions{})
 
 	if err != nil {
@@ -86,7 +95,7 @@ serverStatusLoop:
 	}
 
 clientStatusLoop:
-	for status := range serverSideStatusChan {
+	for status := range clientSideStatusChan {
 		switch status {
 		case commons.SUCCESS:
 			{
