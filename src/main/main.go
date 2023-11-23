@@ -86,9 +86,8 @@ clientStatusLoop:
 			}
 		case commons.FAILURE:
 			{
-				log.Error("Clients setup failed, deleting LatencyMeasurements in both clusters..")
 				deleteLatencyMeasurementsInBothClusters(serverSideClient, serverSideLm, clientSideClient, clientSideLm)
-				os.Exit(1)
+				log.Panic("Clients setup failed, deleting LatencyMeasurements in both clusters..")
 			}
 		}
 	}
@@ -132,21 +131,18 @@ func deleteLatencyMeasurement(client dynamic.Interface, lm commons.LatencyMeasur
 func getDynamicClientWithContextName(contextName string) dynamic.Interface {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
-		log.Errorf("error getting user home dir: %v\n", err)
-		os.Exit(1)
+		log.Panicf("error getting user home dir: %v\n", err)
 	}
 	kubeConfigPath := filepath.Join(userHomeDir, ".kube", "config")
 	serverKubeConfig, err := buildConfigWithContextFromFlags(contextName, kubeConfigPath)
 
 	if err != nil {
-		log.Errorf("Failed to create k8s API client from context name: %v\n", err)
-		os.Exit(1)
+		log.Panicf("Failed to create k8s API client from context name: %v\n", err)
 	}
 
 	dynClient, err := dynamic.NewForConfig(serverKubeConfig)
 	if err != nil {
-		log.Errorf("error creating dynamic client: %v\n", err)
-		os.Exit(1)
+		log.Panicf("error creating dynamic client: %v\n", err)
 	}
 	return dynClient
 }
