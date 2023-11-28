@@ -1,10 +1,10 @@
 measurementID: measurement-2023-22-11
-serverSide: kind-server-side
-clientSide: kind-client-side
-metricsAggregator: agregator
+serverSideClusterName: kind-server-side
+clientSideClusterName: kind-client-side
+metricsAggregatorAddress: agregator
 pairs:
-  - serverNode: server-side-worker
-    clientNode: client-side-worker
+  - serverNodeName: server-side-worker
+    clientNodeName: client-side-worker
     serverIP: 172.18.0.3
     serverPort: 1501
     interval: 50

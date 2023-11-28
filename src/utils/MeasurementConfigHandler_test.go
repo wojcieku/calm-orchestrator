@@ -14,8 +14,8 @@ func TestMeasurementConfigHandler_LoadConfiguration(t *testing.T) {
 	config := handler.LoadConfigurationFromPath(configFilePath)
 
 	serverSideName := "klaster-serwerowy"
-	if config.ServerSide != serverSideName {
-		t.Error("Wrong ServerSide name parsed, expected:", serverSideName, "got:", config.ServerSide)
+	if config.ServerSideClusterName != serverSideName {
+		t.Error("Wrong ServerSideClusterName name parsed, expected:", serverSideName, "got:", config.ServerSideClusterName)
 	}
 	if len(config.Pairs) != 2 {
 		t.Error("Quantity of measurement pairs invalid. Expected: 2, got:", len(config.Pairs))

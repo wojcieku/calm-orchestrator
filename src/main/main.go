@@ -23,8 +23,8 @@ func main() {
 	config := configHandler.LoadConfigurationFromPath(CONFIG_PATH)
 
 	// cluster names
-	clientContextName := config.ClientSide
-	serverContextName := config.ServerSide
+	clientContextName := config.ClientSideClusterName
+	serverContextName := config.ServerSideClusterName
 
 	// prepare clients (kube config validation)
 	serverSideClient := getDynamicClientWithContextName(serverContextName)
