@@ -38,8 +38,8 @@ func main() {
 	serverSideStatusChan := make(chan string)
 	clientSideStatusChan := make(chan string)
 
-	serverSideController := controller.NewLatencyMeasurementController(serverSideClient, serverSideStatusChan)
-	clientSideController := controller.NewLatencyMeasurementController(clientSideClient, clientSideStatusChan)
+	serverSideController := controller.NewLatencyMeasurementController(serverSideClient, serverSideStatusChan, config.MeasurementID)
+	clientSideController := controller.NewLatencyMeasurementController(clientSideClient, clientSideStatusChan, config.MeasurementID)
 
 	go serverSideController.Run()
 	defer serverSideController.Stop()

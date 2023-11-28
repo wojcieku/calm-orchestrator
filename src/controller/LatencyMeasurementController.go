@@ -17,45 +17,33 @@ import (
 const maxRetries = 3
 
 type LatencyMeasurementController struct {
-	informer cache.SharedIndexInformer
-	stopper  chan struct{}
-	queue    workqueue.RateLimitingInterface
-	status   chan string
+	informer        cache.SharedIndexInformer
+	stopper         chan struct{}
+	queue           workqueue.RateLimitingInterface
+	status          chan string
+	measurementName string
 }
 
-func NewLatencyMeasurementController(client dynamic.Interface, statusChan chan string) *LatencyMeasurementController {
-	// TODO for namespace
-	dynInformer := dynamicinformer.NewDynamicSharedInformerFactory(client, 0)
+func NewLatencyMeasurementController(client dynamic.Interface, statusChan chan string, measurementName string) *LatencyMeasurementController {
+	dynInformer := dynamicinformer.NewFilteredDynamicSharedInformerFactory(client, 0, commons.NAMESPACE, nil)
 	informer := dynInformer.ForResource(commons.LatencyMeasurementResource).Informer()
 	stopper := make(chan struct{})
 
 	queue := workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		// TODO obsluga dodania i usuniecia?
-		DeleteFunc: func(obj interface{}) {
-			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
-			if err == nil {
-				queue.Add("Delete:" + key)
-			}
-		},
-		AddFunc: func(obj interface{}) {
-			key, err := cache.MetaNamespaceKeyFunc(obj)
-			if err == nil {
-				queue.Add(key)
-			}
-		},
-		UpdateFunc: getUpdateFunc(queue),
+		UpdateFunc: getUpdateFunc(queue, measurementName),
 	})
 
 	return &LatencyMeasurementController{
-		informer: informer,
-		queue:    queue,
-		stopper:  stopper,
-		status:   statusChan,
+		informer:        informer,
+		queue:           queue,
+		stopper:         stopper,
+		status:          statusChan,
+		measurementName: measurementName,
 	}
 }
 
-func getUpdateFunc(queue workqueue.RateLimitingInterface) func(oldObj interface{}, newObj interface{}) {
+func getUpdateFunc(queue workqueue.RateLimitingInterface, measurementName string) func(oldObj interface{}, newObj interface{}) {
 	return func(oldObj, newObj interface{}) {
 		converter := runtime.DefaultUnstructuredConverter
 		unstructured, err := converter.ToUnstructured(newObj)
@@ -67,6 +55,10 @@ func getUpdateFunc(queue workqueue.RateLimitingInterface) func(oldObj interface{
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(unstructured, &lm)
 		if err != nil {
 			log.Error("Event conversion to LatencyMeasurement failed")
+			return
+		}
+		// filter events only for this measurement
+		if lm.Name != measurementName {
 			return
 		}
 		if lm.Status.State == commons.SUCCESS {
