@@ -5,6 +5,7 @@ import (
 	"calm-orchestrator/src/controller"
 	"calm-orchestrator/src/utils"
 	"context"
+	"flag"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,14 +14,15 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-// TODO konfiguracja jako parametr wywolania albo cos + parametr kubeconfiga
 // TODO debug mode - wstrzymuje usuniecie zasobow w przypadku bledu
-const CONFIG_PATH = "sampleConfig.yaml"
 
 func main() {
+	configPath := flag.String("path", "", "Path to measurement configuration file")
+	flag.Parse()
+
 	// load/read config
 	configHandler := utils.MeasurementConfigHandler{}
-	config := configHandler.LoadConfigurationFromPath(CONFIG_PATH)
+	config := configHandler.LoadConfigurationFromPath(*configPath)
 
 	// cluster names
 	clientContextName := config.ClientSideClusterName

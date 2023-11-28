@@ -1,4 +1,4 @@
-measurementID: measurement-2023-22-11
+measurementID: measurement-a-b
 serverSideClusterName: kind-server-side
 clientSideClusterName: kind-client-side
 metricsAggregatorAddress: agregator

@@ -1,0 +1,11 @@
+measurementID: measurement-b-a
+serverSideClusterName: kind-client-side
+clientSideClusterName: kind-server-side
+metricsAggregatorAddress: agregator
+pairs:
+  - serverNodeName: client-side-worker
+    clientNodeName: server-side-worker
+    serverIP: 172.18.0.4
+    serverPort: 1502
+    interval: 50
+    duration: 5
