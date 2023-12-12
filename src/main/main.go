@@ -98,8 +98,6 @@ clientStatusLoop:
 	// delete Client and Server side LMs
 	deleteLatencyMeasurementsInBothClusters(serverSideClient, serverSideLm, clientSideClient, clientSideLm)
 	log.Info("Measurement complete, all resources cleaned up")
-
-	// completed, metrics?
 }
 
 func createLatencyMeasurement(client dynamic.Interface, lm commons.LatencyMeasurement) {

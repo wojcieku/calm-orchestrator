@@ -63,12 +63,15 @@ func (m *MeasurementConfigHandler) ConfigToClientSideLatencyMeasurement(config M
 	lm.Spec.Side = commons.CLIENT_SIDE
 	for _, p := range config.Pairs {
 		client := commons.Client{
-			Node:              p.ClientNodeName,
-			IPAddress:         p.ServerIP,
-			Port:              p.ServerPort,
-			Interval:          p.Interval,
-			Duration:          p.Duration,
-			MetricsAggregator: config.MetricsAggregatorAddress,
+			IPAddress:            p.ServerIP,
+			Port:                 p.ServerPort,
+			Interval:             p.Interval,
+			Duration:             p.Duration,
+			MetricsAggregatorURL: config.MetricsAggregatorAddress,
+			ClientNodeName:       p.ClientNodeName,
+			ServerNodeName:       p.ServerNodeName,
+			ClientClusterName:    config.ClientSideClusterName,
+			ServerClusterName:    config.ServerSideClusterName,
 		}
 		lm.Spec.Clients = append(lm.Spec.Clients, client)
 	}

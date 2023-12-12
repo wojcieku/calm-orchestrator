@@ -52,10 +52,13 @@ type Server struct {
 }
 
 type Client struct {
-	Node              string `json:"node,omitempty"`
-	IPAddress         string `json:"ipAddress,omitempty"`
-	Port              int    `json:"port,omitempty"`
-	Interval          int    `json:"interval,omitempty"`
-	Duration          int    `json:"duration,omitempty"`
-	MetricsAggregator string `json:"metricsAggregator,omitempty"`
+	IPAddress            string `json:"ipAddress,omitempty"`
+	Port                 int    `json:"port,omitempty"`
+	Interval             int    `json:"interval,omitempty"`
+	Duration             int    `json:"duration,omitempty"`
+	MetricsAggregatorURL string `json:"metricsAggregatorURL,omitempty"`
+	ClientNodeName       string `json:"clientNodeName,omitempty"`
+	ServerNodeName       string `json:"serverNodeName,omitempty"`
+	ClientClusterName    string `json:"clientClusterName,omitempty"`
+	ServerClusterName    string `json:"serverClusterName,omitempty"`
 }
