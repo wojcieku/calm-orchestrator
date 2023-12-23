@@ -33,13 +33,13 @@ func TestMeasurementConfigHandler_ConfigToServerLatencyMeasurement(t *testing.T)
 			Namespace: commons.NAMESPACE,
 		},
 		Spec: commons.LatencyMeasurementSpec{Servers: []commons.Server{{
-			Node:      "serverNode1",
-			IPAddress: "10.10.10.10",
-			Port:      1501,
+			ServerNodeName:  "serverNode1",
+			ServerIPAddress: "10.10.10.10",
+			ServerPort:      1501,
 		}, {
-			Node:      "serverNode2",
-			IPAddress: "20.20.20.20",
-			Port:      2138,
+			ServerNodeName:  "serverNode2",
+			ServerIPAddress: "20.20.20.20",
+			ServerPort:      2138,
 		}}},
 	}
 
