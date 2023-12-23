@@ -46,7 +46,7 @@ type LatencyMeasurementStatus struct {
 }
 
 type Server struct {
-	ServerNodeName  string `json:"node,omitempty"`
+	ServerNodeName  string `json:"serverNodeName,omitempty"`
 	ClientNodeName  string `json:"clientNodeName,omitempty"`
 	ServerIPAddress string `json:"serverIPAddress,omitempty"`
 	ServerPort      int    `json:"serverPort,omitempty"`
