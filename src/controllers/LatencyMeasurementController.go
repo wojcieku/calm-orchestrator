@@ -1,4 +1,4 @@
-package controller
+package controllers
 
 import (
 	"calm-orchestrator/src/commons"

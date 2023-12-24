@@ -1,20 +1,33 @@
-package main
+package controllers
 
 import (
 	log "github.com/sirupsen/logrus"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"path/filepath"
 )
 
+// TODO ogarniecie sciezek w secrecie itd
+func GetClientSet() *kubernetes.Clientset {
+	userHomeDir, err := os.UserHomeDir()
+	kubeConfigPath := filepath.Join(userHomeDir, ".kube", "config")
+	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
+	if err != nil {
+		return nil
+	}
+	set, _ := kubernetes.NewForConfig(restConfig)
+	return set
+}
+
 func getDynamicClientWithContextName(contextName string) dynamic.Interface {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		log.Panicf("error getting user home dir: %v\n", err)
 	}
-	kubeConfigPath := filepath.Join(userHomeDir, ".kube", "config")
+	kubeConfigPath := filepath.Join(userHomeDir, ".kube", "config-outside-clusters")
 	serverKubeConfig, err := buildConfigWithContextFromFlags(contextName, kubeConfigPath)
 
 	if err != nil {
