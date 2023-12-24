@@ -12,10 +12,11 @@ import (
 
 // TODO ogarniecie sciezek w secrecie itd
 func GetClientSet() *kubernetes.Clientset {
-	userHomeDir, err := os.UserHomeDir()
+	userHomeDir, _ := os.UserHomeDir()
 	kubeConfigPath := filepath.Join(userHomeDir, ".kube", "config")
 	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
+		log.Panicf("Could not obtain kube config file")
 		return nil
 	}
 	set, _ := kubernetes.NewForConfig(restConfig)
