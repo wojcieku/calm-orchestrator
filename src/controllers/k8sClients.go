@@ -21,10 +21,8 @@ import (
 //            secretName: cluster-configs
 
 func GetClientSet() *kubernetes.Clientset {
-	kubeConfigPath := filepath.Join("/var", "config")
+	kubeConfigPath := filepath.Join("/var/management", "config")
 	configFileContent, err := os.ReadFile(kubeConfigPath)
-	log.Info("Config file content:")
-	log.Info(string(configFileContent))
 	if err != nil {
 		log.Errorf("Could not read kube config file: %s", err)
 		return nil
@@ -42,7 +40,7 @@ func GetClientSet() *kubernetes.Clientset {
 }
 
 func getDynamicClientWithContextName(contextName string) dynamic.Interface {
-	kubeConfigPath := filepath.Join("/var", "config-outside-clusters")
+	kubeConfigPath := filepath.Join("/var/outside", "config-outside-clusters")
 	serverKubeConfig, err := buildConfigWithContextFromFlags(contextName, kubeConfigPath)
 
 	if err != nil {

@@ -55,7 +55,7 @@ serverStatusLoop:
 		case commons.FAILURE:
 			{
 				deleteLatencyMeasurement(serverSideClient, serverSideLm)
-				log.Panic("Servers setup failed, deleting LatencyMeasurement in server side cluster..")
+				log.Error("Servers setup failed, deleting LatencyMeasurement in server side cluster..")
 			}
 		}
 	}
@@ -76,7 +76,7 @@ clientStatusLoop:
 		case commons.FAILURE:
 			{
 				deleteLatencyMeasurementsInBothClusters(serverSideClient, serverSideLm, clientSideClient, clientSideLm)
-				log.Panic("Clients setup failed, deleting LatencyMeasurements in both clusters..")
+				log.Error("Clients setup failed, deleting LatencyMeasurements in both clusters..")
 			}
 		}
 	}
@@ -96,7 +96,7 @@ func createLatencyMeasurement(client dynamic.Interface, lm commons.LatencyMeasur
 
 	if err != nil {
 		deleteLatencyMeasurement(client, lm)
-		log.Panic("Failed to create Server Side Latency Measurement: ", err)
+		log.Error("Failed to create Server Side Latency Measurement: ", err)
 	}
 }
 
