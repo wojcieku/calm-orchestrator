@@ -10,25 +10,39 @@ import (
 	"path/filepath"
 )
 
-// TODO ogarniecie sciezek w secrecie itd
+// TODO ogarniecie sciezek w secrecie itd - trzeba zrobić Secret z keys: config i config-outside-clusers a w deploymencie dać:
+//  volumeMounts:
+//          - mountPath: "/.kube"
+//            name: cluster-configs-mount
+//            readOnly: true
+//      volumes:
+//        - name: cluster-configs-mount
+//          secret:
+//            secretName: cluster-configs
+
 func GetClientSet() *kubernetes.Clientset {
-	userHomeDir, _ := os.UserHomeDir()
-	kubeConfigPath := filepath.Join(userHomeDir, ".kube", "config")
-	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
+	kubeConfigPath := filepath.Join("/var", "config")
+	configFileContent, err := os.ReadFile(kubeConfigPath)
+	log.Info("Config file content:")
+	log.Info(string(configFileContent))
 	if err != nil {
-		log.Panicf("Could not obtain kube config file")
+		log.Errorf("Could not read kube config file: %s", err)
 		return nil
 	}
-	set, _ := kubernetes.NewForConfig(restConfig)
+	restConfig, err := clientcmd.RESTConfigFromKubeConfig(configFileContent)
+	if err != nil {
+		log.Errorf("Could not obtain kube config file: %s", err)
+		return nil
+	}
+	set, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		log.Errorf("Could not create client set: %s", err)
+	}
 	return set
 }
 
 func getDynamicClientWithContextName(contextName string) dynamic.Interface {
-	userHomeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Panicf("error getting user home dir: %v\n", err)
-	}
-	kubeConfigPath := filepath.Join(userHomeDir, ".kube", "config-outside-clusters")
+	kubeConfigPath := filepath.Join("/var", "config-outside-clusters")
 	serverKubeConfig, err := buildConfigWithContextFromFlags(contextName, kubeConfigPath)
 
 	if err != nil {

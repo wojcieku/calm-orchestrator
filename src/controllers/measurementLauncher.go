@@ -54,8 +54,6 @@ serverStatusLoop:
 			}
 		case commons.FAILURE:
 			{
-				//fmt.Println("Resources will be deleted, check logs or press any key to proceed")
-				//_, _ = fmt.Scanln()
 				deleteLatencyMeasurement(serverSideClient, serverSideLm)
 				log.Panic("Servers setup failed, deleting LatencyMeasurement in server side cluster..")
 			}
@@ -77,8 +75,6 @@ clientStatusLoop:
 			}
 		case commons.FAILURE:
 			{
-				//fmt.Println("Resources will be deleted, check logs or press any key to proceed")
-				//_, _ = fmt.Scanln()
 				deleteLatencyMeasurementsInBothClusters(serverSideClient, serverSideLm, clientSideClient, clientSideLm)
 				log.Panic("Clients setup failed, deleting LatencyMeasurements in both clusters..")
 			}

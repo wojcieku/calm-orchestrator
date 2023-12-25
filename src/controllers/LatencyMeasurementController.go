@@ -25,7 +25,7 @@ type LatencyMeasurementController struct {
 }
 
 func NewLatencyMeasurementController(client dynamic.Interface, statusChan chan string, measurementName string) *LatencyMeasurementController {
-	dynInformer := dynamicinformer.NewFilteredDynamicSharedInformerFactory(client, 0, commons.NAMESPACE, nil)
+	dynInformer := dynamicinformer.NewFilteredDynamicSharedInformerFactory(client, 5*time.Second, commons.NAMESPACE, nil)
 	informer := dynInformer.ForResource(commons.LatencyMeasurementResource).Informer()
 	stopper := make(chan struct{})
 
