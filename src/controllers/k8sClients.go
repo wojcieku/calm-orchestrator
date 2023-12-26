@@ -10,16 +10,6 @@ import (
 	"path/filepath"
 )
 
-// TODO ogarniecie sciezek w secrecie itd - trzeba zrobić Secret z keys: config i config-outside-clusers a w deploymencie dać:
-//  volumeMounts:
-//          - mountPath: "/.kube"
-//            name: cluster-configs-mount
-//            readOnly: true
-//      volumes:
-//        - name: cluster-configs-mount
-//          secret:
-//            secretName: cluster-configs
-
 func GetClientSet() *kubernetes.Clientset {
 	kubeConfigPath := filepath.Join("/var/management", "config")
 	configFileContent, err := os.ReadFile(kubeConfigPath)
