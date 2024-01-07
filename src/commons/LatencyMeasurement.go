@@ -46,14 +46,14 @@ type LatencyMeasurementStatus struct {
 }
 
 type Server struct {
-	ServerNodeName  string `json:"serverNodeName,omitempty"`
-	ClientNodeName  string `json:"clientNodeName,omitempty"`
-	ServerIPAddress string `json:"serverIPAddress,omitempty"`
-	ServerPort      int    `json:"serverPort,omitempty"`
+	ServerNodeName string `json:"serverNodeName,omitempty"`
+	ClientNodeName string `json:"clientNodeName,omitempty"`
+	ServerIP       string `json:"serverIP,omitempty"`
+	ServerPort     int    `json:"serverPort,omitempty"`
 }
 
 type Client struct {
-	IPAddress                string `json:"ipAddress,omitempty"`
+	ServerIP                 string `json:"serverIP,omitempty"`
 	ServerPort               int    `json:"serverPort,omitempty"`
 	Interval                 int    `json:"interval,omitempty"`
 	Duration                 int    `json:"duration,omitempty"`

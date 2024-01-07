@@ -49,10 +49,10 @@ func (m *MeasurementConfigHandler) ConfigToServerSideLatencyMeasurement(config M
 	lm.Spec.Side = commons.SERVER_SIDE
 	for _, p := range config.Pairs {
 		server := commons.Server{
-			ServerNodeName:  p.ServerNodeName,
-			ClientNodeName:  p.ClientNodeName,
-			ServerIPAddress: p.ServerIP,
-			ServerPort:      p.ServerPort,
+			ServerNodeName: p.ServerNodeName,
+			ClientNodeName: p.ClientNodeName,
+			ServerIP:       p.ServerIP,
+			ServerPort:     p.ServerPort,
 		}
 		lm.Spec.Servers = append(lm.Spec.Servers, server)
 	}
@@ -64,7 +64,7 @@ func (m *MeasurementConfigHandler) ConfigToClientSideLatencyMeasurement(config M
 	lm.Spec.Side = commons.CLIENT_SIDE
 	for _, p := range config.Pairs {
 		client := commons.Client{
-			IPAddress:                p.ServerIP,
+			ServerIP:                 p.ServerIP,
 			ServerPort:               p.ServerPort,
 			Interval:                 p.Interval,
 			Duration:                 p.Duration,
